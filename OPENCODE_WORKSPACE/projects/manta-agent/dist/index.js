@@ -14812,7 +14812,7 @@ function createSharkHooks(guardian, gateManager, evidenceCollector, coordinator)
 }
 
 // src/index.ts
-var mantaColor = "#4B0082";
+var mantaColor = "#6B4C9A";
 async function MantaAgent(input) {
   const { directory } = input;
   const workspacePath = process.cwd();

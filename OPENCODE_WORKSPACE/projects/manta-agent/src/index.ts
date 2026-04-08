@@ -19,8 +19,8 @@ import { createSharkEvidenceTool } from './tools/shark-evidence.js';
 import { createCheckpointTool } from './tools/checkpoint.js';
 import { createSharkHooks } from './hooks/v4.1/index.js';
 
-// Midnight Purple — #4B0082
-const mantaColor = '#4B0082';
+// Lighter Midnight Purple — #6B4C9A
+const mantaColor = '#6B4C9A';
 
 export default async function MantaAgent(input: PluginInput): Promise<Hooks> {
   const { directory } = input;
