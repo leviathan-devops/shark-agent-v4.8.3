@@ -7,6 +7,7 @@ import { GateManager } from '../shared/gates.js';
 import { EvidenceCollector } from '../shared/evidence.js';
 import { createGuardianHook } from './guardian-hook.js';
 import { createGateHook } from './gate-hook.js';
+import { createGateEnforceHook } from './gate-enforce-hook.js';
 import { createChatMessageHook } from './chat-message-hook.js';
 import { createMessagesTransformHook } from './messages-transform-hook.js';
 import { createCommandExecuteHook } from './command-execute-hook.js';
@@ -26,12 +27,18 @@ export function createSharkHooks(
   stateStore: StateStore,
   messenger: SharkMessenger
 ): Hooks {
+  const gateEnforceHook = createGateEnforceHook(gateManager, evidenceCollector);
+  const guardianHook = createGuardianHook(guardian);
+
   return {
     event: createSessionHook(gateManager, evidenceCollector, peerDispatch, stateStore, messenger),
     'chat.message': createChatMessageHook(),
     'command.execute.before': createCommandExecuteHook(),
     'experimental.chat.messages.transform': createMessagesTransformHook(),
-    'tool.execute.before': createGuardianHook(guardian),
+    'tool.execute.before': (input) => {
+      gateEnforceHook(input);
+      guardianHook(input);
+    },
     'tool.execute.after': (input, output) => {
       createToolSummarizerHook()(input, output);
       createGateHook(gateManager, evidenceCollector, peerDispatch)(input, output);
