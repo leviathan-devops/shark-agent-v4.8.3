@@ -75,8 +75,9 @@ export const GATE_CRITERIA: Record<GateName, GateCriteria> = {
       'All previous gates passed',
       'Evidence archived',
       'Checkpoint created',
+      'OPENCODE CONTAINER TEST: Container test suite passed',
     ],
-    evidenceRequired: ['EvidenceArchive.zip', 'DeliverySummary.md'],
+    evidenceRequired: ['EvidenceArchive.zip', 'DeliverySummary.md', 'ContainerTestResult.json'],
   },
 };
 
@@ -95,7 +96,7 @@ export class GateManager {
   private evidenceCollector: EvidenceCollector;
   private iterationAttempts: Record<string, number> = {};
 
-  constructor(basePath: string = '.manta') {
+  constructor(basePath: string = '.shark') {
     this.evidenceCollector = new EvidenceCollector(basePath);
   }
 

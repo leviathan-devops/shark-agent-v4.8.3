@@ -17,11 +17,12 @@ export interface BrainMessage {
   requiresAck: boolean;
 }
 
-export interface MantaMessenger {
+export interface SharkMessenger {
   send(message: Omit<BrainMessage, 'id' | 'timestamp'>): void;
   receive(brainId: string): BrainMessage[];
   waitForAck(messageId: string, timeoutMs: number): Promise<boolean>;
   getQueueDepth(brainId: string): number;
+  cleanup(): void;
 }
 
 const PRIORITY_ORDER: Record<BrainMessage['priority'], number> = {
@@ -35,7 +36,7 @@ function generateId(): string {
   return `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 }
 
-export function createMantaMessenger(): MantaMessenger {
+export function createSharkMessenger(): SharkMessenger {
   const queues = new Map<string, BrainMessage[]>();
   const pendingAcks = new Map<
     string,
@@ -119,6 +120,15 @@ export function createMantaMessenger(): MantaMessenger {
 
     getQueueDepth(brainId: string): number {
       return getQueue(brainId).length;
+    },
+
+    cleanup(): void {
+      for (const [id, pending] of pendingAcks) {
+        clearTimeout(pending.timer);
+        pendingAcks.delete(id);
+      }
+      queues.clear();
+      receivedAcks.clear();
     },
   };
 }

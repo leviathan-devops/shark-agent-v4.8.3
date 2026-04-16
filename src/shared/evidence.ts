@@ -2,7 +2,7 @@
  * Evidence System
  * 
  * Mandatory evidence collection for every gate.
- * Evidence is archived to .manta/evidence/{gate}/{timestamp}/
+ * Evidence is archived to .shark/evidence/{gate}/{timestamp}/
  */
 
 import * as fs from 'node:fs';
@@ -26,13 +26,13 @@ export interface IterationEvidence {
   gateAttempts: Record<GateName, number>;
 }
 
-const EVIDENCE_DIR = '.manta/evidence';
-const ITERATIONS_DIR = '.manta/iterations';
+const EVIDENCE_DIR = '.shark/evidence';
+const ITERATIONS_DIR = '.shark/iterations';
 
 export class EvidenceCollector {
   private basePath: string;
 
-  constructor(basePath: string = '.manta') {
+  constructor(basePath: string = '.shark') {
     this.basePath = basePath;
   }
 

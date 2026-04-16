@@ -6,14 +6,13 @@
  * All brains can READ from all domains.
  */
 
-export type StateDomain = 
-  | 'plan-state' 
-  | 'manta-state' 
-  | 'manta-context' 
-  | 'manta-context'
-  | 'manta-workflow'
-  | 'manta-quality'
-  | 'manta-security';
+export type StateDomain =
+  | 'plan-state'
+  | 'shark-state'
+  | 'shark-context'
+  | 'shark-workflow'
+  | 'shark-quality'
+  | 'shark-security';
 
 export interface WriteResult {
   success: boolean;
@@ -37,17 +36,17 @@ export interface StateStore {
   watch(key: string, callback: (value: any, version: number) => void): Unsubscribe;
   snapshot(): StateSnapshot;
   restore(snapshot: StateSnapshot): void;
+  cleanup(): void;
 }
 
 // Shark V4 domain ownership
 export const DOMAIN_OWNERSHIP: Record<StateDomain, string[]> = {
-  'plan-state': ['manta-plan-brain'],
-  'manta-state': ['manta-execution-brain'],
-  'manta-context': ['manta-reasoning-brain'],
-  'manta-context': ['manta-reasoning-brain'],
-  'manta-workflow': ['manta-system-brain'],
-  'manta-quality': ['manta-execution-brain', 'manta-system-brain'],
-  'manta-security': ['manta-system-brain'],
+  'plan-state': ['shark-plan-brain'],
+  'shark-state': ['shark-execution-brain'],
+  'shark-context': ['shark-reasoning-brain'],
+  'shark-workflow': ['shark-system-brain'],
+  'shark-quality': ['shark-execution-brain', 'shark-system-brain'],
+  'shark-security': ['shark-system-brain'],
 };
 
 export function createStateStore(): StateStore {
@@ -151,6 +150,12 @@ export function createStateStore(): StateStore {
       for (const [key, version] of Object.entries(snapshot.versions)) {
         versions.set(key, version);
       }
+    },
+
+    cleanup(): void {
+      data.clear();
+      versions.clear();
+      watchers.clear();
     },
   };
 }

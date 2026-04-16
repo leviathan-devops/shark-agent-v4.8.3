@@ -6,7 +6,7 @@ import type { GateManager } from '../shared/gates.js';
 export function createSharkStatusTool(
   stateStore: StateStore,
   gateManager: GateManager,
-  variant: 'manta' | 'macro'
+  variant: 'shark' | 'macro'
 ) {
   return tool({
     description: 'Show current Shark V4 state: brain, gate, iteration, and evidence status',
@@ -18,10 +18,10 @@ export function createSharkStatusTool(
 
       let brainState = 'N/A';
       if (variant === 'micro') {
-        const microState = stateStore.get<any>('manta-micro-state', 'manta-state');
+        const microState = stateStore.get<any>('shark-micro-state', 'shark-state');
         brainState = microState?.currentBrain || 'unknown';
       } else {
-        const macroState = stateStore.get<any>('manta-state', 'manta-state');
+        const macroState = stateStore.get<any>('shark-macro-state', 'shark-state');
         brainState = macroState?.activeBrains?.join(', ') || 'unknown';
       }
 

@@ -1,5 +1,5 @@
 /**
- * Checkpoint Tool — State persistence
+ * Checkpoint Tool — State persistence for Shark
  */
 import { tool } from '@opencode-ai/plugin';
 import { z } from 'zod';
@@ -21,8 +21,7 @@ export function createCheckpointTool(
       const { message } = args;
       const checkpointId = `cp_${Date.now()}`;
       
-      // Create checkpoint in .manta directory
-      const checkpointDir = path.join(process.cwd(), '.manta', 'checkpoints');
+      const checkpointDir = path.join(process.cwd(), '.shark', 'checkpoints');
       await fs.promises.mkdir(checkpointDir, { recursive: true });
       
       const checkpointData = {
