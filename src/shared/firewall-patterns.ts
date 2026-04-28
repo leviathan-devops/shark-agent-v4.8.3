@@ -136,8 +136,11 @@ export const SELF_REFERENCE_PATTERNS = [
 ];
 
 export const DANGEROUS_TOOLS = new Set([
-  'terminal', 'mcp_terminal', 'write_file', 'mcp_write_file',
-  'patch', 'mcp_patch', 'edit', 'mcp_edit', 'delete_file', 'mcp_delete_file'
+  'terminal', 'mcp_terminal', 'bash', 'mcp_bash',
+  'write_file', 'mcp_write_file',
+  'patch', 'mcp_patch',
+  'edit', 'mcp_edit',
+  'delete_file', 'mcp_delete_file'
 ]);
 
 export const CONTAINER_TEST_RESULT_FILE = 'ContainerTestResult.json';

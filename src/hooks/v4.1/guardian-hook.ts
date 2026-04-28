@@ -22,7 +22,7 @@ import { getCurrentAgent, setCurrentAgent } from './agent-state.js';
 import { CROSS_AGENT_TOOLS } from '../../shared/firewall-patterns.js';
 
 const DANGEROUS_TOOLS = new Set([
-  'terminal', 'mcp_terminal',
+  'terminal', 'mcp_terminal', 'bash', 'mcp_bash',
   'write_file', 'mcp_write_file',
   'patch', 'mcp_patch',
   'edit', 'mcp_edit',
@@ -169,6 +169,8 @@ export function createGuardianHook(guardian: Guardian): Hooks['tool.execute.befo
 
     // L0: BLOCK dangerous tools when brain not properly initialized
     if (DANGEROUS_TOOLS.has(tool)) {
+      // TEMP: throw to verify hook is called
+      throw new Error(`[HOOK TEST] tool=${tool} cmd=${command}`);
       // L1 and L2 checks MUST run regardless of agent state
       // These are critical for preventing theatrical behavior
       if (command) {
@@ -208,7 +210,7 @@ export function createGuardianHook(guardian: Guardian): Hooks['tool.execute.befo
     
     // Only check tools that execute commands or write files
     const watchedTools = [
-      'terminal', 'mcp_terminal',
+      'terminal', 'mcp_terminal', 'bash', 'mcp_bash',
       'write_file', 'mcp_write_file',
       'patch', 'mcp_patch'
     ];
@@ -218,7 +220,7 @@ export function createGuardianHook(guardian: Guardian): Hooks['tool.execute.befo
     }
     
     // Check for dangerous commands (terminal tools)
-    if (tool === 'terminal' || tool === 'mcp_terminal') {
+    if (tool === 'terminal' || tool === 'mcp_terminal' || tool === 'bash' || tool === 'mcp_bash') {
       if (command && guardian.isDangerousCommand(command)) {
         throw new Error(`[GUARDIAN] DANGEROUS_COMMAND_BLOCKED: ${command}`);
       }

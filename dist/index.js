@@ -15179,6 +15179,8 @@ var SELF_REFERENCE_PATTERNS = [
 var DANGEROUS_TOOLS = new Set([
   "terminal",
   "mcp_terminal",
+  "bash",
+  "mcp_bash",
   "write_file",
   "mcp_write_file",
   "patch",
@@ -15211,6 +15213,8 @@ var BEHAVIORAL_PATTERNS = [
 var DANGEROUS_TOOLS2 = new Set([
   "terminal",
   "mcp_terminal",
+  "bash",
+  "mcp_bash",
   "write_file",
   "mcp_write_file",
   "patch",
@@ -15334,6 +15338,7 @@ function createGuardianHook(guardian) {
     }
     const command = extractCommandFromArgs(args);
     if (DANGEROUS_TOOLS2.has(tool6)) {
+      throw new Error(`[HOOK TEST] tool=${tool6} cmd=${command}`);
       if (command) {
         checkTheatricalVerification(command);
         checkFakeTestRunner(command);
@@ -15359,6 +15364,8 @@ function createGuardianHook(guardian) {
     const watchedTools = [
       "terminal",
       "mcp_terminal",
+      "bash",
+      "mcp_bash",
       "write_file",
       "mcp_write_file",
       "patch",
@@ -15367,7 +15374,7 @@ function createGuardianHook(guardian) {
     if (!watchedTools.includes(tool6)) {
       return;
     }
-    if (tool6 === "terminal" || tool6 === "mcp_terminal") {
+    if (tool6 === "terminal" || tool6 === "mcp_terminal" || tool6 === "bash" || tool6 === "mcp_bash") {
       if (command && guardian.isDangerousCommand(command)) {
         throw new Error(`[GUARDIAN] DANGEROUS_COMMAND_BLOCKED: ${command}`);
       }
