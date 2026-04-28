@@ -152,93 +152,63 @@ export function createGuardianHook(guardian: Guardian): Hooks['tool.execute.befo
     const args = (output as any)?.args as Record<string, unknown> | undefined;
     const command = extractCommandFromArgs(args);
     
-    // L0: IDENTITY WALL — agent field removed in newer SDK, use session state
+    // Agent identity resolution
     const sessionAgent = getCurrentAgent(sessionID);
     const toolBasedAgent = (tool?.startsWith('shark-') || tool === 'checkpoint') ? 'shark' : undefined;
     const currentAgent = sessionAgent || toolBasedAgent;
+    const isShark = currentAgent === 'shark' || currentAgent?.startsWith('shark_');
 
-    // Update session state when tool-based agent detected but no session state
     if (toolBasedAgent && !sessionAgent) {
       setCurrentAgent(toolBasedAgent, sessionID);
     }
 
-    // L0: BLOCK dangerous tools when brain not properly initialized
+    // EVERYTHING BELOW IS SHARK-ONLY. No universal hooks. No cross-agent impact.
+    if (!isShark) return;
+
+    // L5.7: Cross-agent tool blocking
+    checkCrossAgentTools(tool);
+
+    // Dangerous command blocking
+    if (command && guardian.isDangerousCommand(command)) {
+      throw new Error(`[GUARDIAN] DANGEROUS_COMMAND_BLOCKED: ${command}`);
+    }
+
+    // Zone-based write protection
+    if ((tool.includes('write_file') || tool.includes('patch')) && args) {
+      const a = args as Record<string, unknown>;
+      const writePath = (a.path as string) || null;
+      if (writePath && !guardian.canWrite(writePath)) {
+        throw new Error(`[GUARDIAN] ZONE_VIOLATION: ${guardian.classifyZone(writePath)} zone — ${writePath}`);
+      }
+      if (writePath) guardian.registerCreate(writePath);
+    }
+
     if (DANGEROUS_TOOLS.has(tool)) {
-      // These are critical for preventing theatrical behavior
       if (command) {
         checkTheatricalVerification(command);
         checkFakeTestRunner(command);
       }
-
-      // Only block for non-shark agents when we KNOW the agent identity
       if (currentAgent && currentAgent !== 'shark' && !currentAgent.startsWith('shark_')) {
         throw new Error(`[L0 BLOCKED] Brain uninitialized for: ${tool}`);
       }
     }
     
-    // L5.7: Cross-agent tools check (mechanical, not text search)
-    checkCrossAgentTools(tool);
-    
-    // L3: Source Inspection
     checkSourceInspection(command);
-    
-    // L4: Wrong Container
     checkWrongContainer(command);
-    
-    // V4.7: SOURCE FILE EDIT BLOCK - MECHANICAL ENFORCEMENT
+
+    // Source file edit protection
     if ((tool === 'edit' || tool === 'mcp_edit') && args) {
-      const editArgs = args as { filePath?: string };
-      if (editArgs?.filePath) {
-        const filePath = editArgs.filePath;
-        const editCheck = guardian.canEdit(filePath);
-        
-        if (!editCheck.allowed) {
-          throw new Error(`[GUARDIAN] Edit blocked: ${filePath}`);
-        }
-        
-        guardian.registerEdit(filePath);
+      const ea = args as { filePath?: string };
+      if (ea?.filePath) {
+        if (!guardian.canEdit(ea.filePath)) throw new Error(`[GUARDIAN] Edit blocked: ${ea.filePath}`);
+        guardian.registerEdit(ea.filePath);
       }
     }
-    
-    // Only check tools that execute commands or write files
-    const watchedTools = [
-      'terminal', 'mcp_terminal', 'bash', 'mcp_bash',
-      'write_file', 'mcp_write_file',
-      'patch', 'mcp_patch'
-    ];
-    
-    if (!watchedTools.includes(tool)) {
-      return;
+
+    // Source file modify check
+    if (command) {
+      const mc = guardian.canModifyFile(command);
+      if (!mc.allowed) throw new Error(`[GUARDIAN] SOURCE_FILE_MODIFY_BLOCKED: ${mc.filePath}`);
     }
-    
-    // Check for dangerous commands (terminal tools)
-    if (tool === 'terminal' || tool === 'mcp_terminal' || tool === 'bash' || tool === 'mcp_bash') {
-      if (command && guardian.isDangerousCommand(command)) {
-        throw new Error(`[GUARDIAN] DANGEROUS_COMMAND_BLOCKED: ${command}`);
-      }
-      
-      if (command) {
-        const modifyCheck = guardian.canModifyFile(command);
-        if (!modifyCheck.allowed) {
-          throw new Error(`[GUARDIAN] SOURCE_FILE_MODIFY_BLOCKED: ${modifyCheck.filePath} — Use edit tool on COPY instead`);
-        }
-      }
-    }
-    
-    // Check path-based write permissions
-    if (tool.includes('write_file') || tool.includes('patch')) {
-      const a = args as Record<string, unknown>;
-      const writePath = (a.path as string) || null;
-      if (writePath && !guardian.canWrite(writePath)) {
-        const zone = guardian.classifyZone(writePath);
-        throw new Error(`[GUARDIAN] ZONE_VIOLATION: ${zone} zone — ${writePath}`);
-      }
-      
-      if (writePath) {
-        guardian.registerCreate(writePath);
-      }
-    }
-    
-    return;
   };
 }

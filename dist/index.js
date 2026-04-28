@@ -15334,8 +15334,24 @@ function createGuardianHook(guardian) {
     const sessionAgent = getCurrentAgent(sessionID);
     const toolBasedAgent = tool6?.startsWith("shark-") || tool6 === "checkpoint" ? "shark" : undefined;
     const currentAgent = sessionAgent || toolBasedAgent;
+    const isShark = currentAgent === "shark" || currentAgent?.startsWith("shark_");
     if (toolBasedAgent && !sessionAgent) {
       setCurrentAgent(toolBasedAgent, sessionID);
+    }
+    if (!isShark)
+      return;
+    checkCrossAgentTools(tool6);
+    if (command && guardian.isDangerousCommand(command)) {
+      throw new Error(`[GUARDIAN] DANGEROUS_COMMAND_BLOCKED: ${command}`);
+    }
+    if ((tool6.includes("write_file") || tool6.includes("patch")) && args) {
+      const a = args;
+      const writePath = a.path || null;
+      if (writePath && !guardian.canWrite(writePath)) {
+        throw new Error(`[GUARDIAN] ZONE_VIOLATION: ${guardian.classifyZone(writePath)} zone \u2014 ${writePath}`);
+      }
+      if (writePath)
+        guardian.registerCreate(writePath);
     }
     if (DANGEROUS_TOOLS2.has(tool6)) {
       if (command) {
@@ -15346,56 +15362,21 @@ function createGuardianHook(guardian) {
         throw new Error(`[L0 BLOCKED] Brain uninitialized for: ${tool6}`);
       }
     }
-    checkCrossAgentTools(tool6);
     checkSourceInspection(command);
     checkWrongContainer(command);
     if ((tool6 === "edit" || tool6 === "mcp_edit") && args) {
-      const editArgs = args;
-      if (editArgs?.filePath) {
-        const filePath = editArgs.filePath;
-        const editCheck = guardian.canEdit(filePath);
-        if (!editCheck.allowed) {
-          throw new Error(`[GUARDIAN] Edit blocked: ${filePath}`);
-        }
-        guardian.registerEdit(filePath);
+      const ea = args;
+      if (ea?.filePath) {
+        if (!guardian.canEdit(ea.filePath))
+          throw new Error(`[GUARDIAN] Edit blocked: ${ea.filePath}`);
+        guardian.registerEdit(ea.filePath);
       }
     }
-    const watchedTools = [
-      "terminal",
-      "mcp_terminal",
-      "bash",
-      "mcp_bash",
-      "write_file",
-      "mcp_write_file",
-      "patch",
-      "mcp_patch"
-    ];
-    if (!watchedTools.includes(tool6)) {
-      return;
+    if (command) {
+      const mc = guardian.canModifyFile(command);
+      if (!mc.allowed)
+        throw new Error(`[GUARDIAN] SOURCE_FILE_MODIFY_BLOCKED: ${mc.filePath}`);
     }
-    if (tool6 === "terminal" || tool6 === "mcp_terminal" || tool6 === "bash" || tool6 === "mcp_bash") {
-      if (command && guardian.isDangerousCommand(command)) {
-        throw new Error(`[GUARDIAN] DANGEROUS_COMMAND_BLOCKED: ${command}`);
-      }
-      if (command) {
-        const modifyCheck = guardian.canModifyFile(command);
-        if (!modifyCheck.allowed) {
-          throw new Error(`[GUARDIAN] SOURCE_FILE_MODIFY_BLOCKED: ${modifyCheck.filePath} \u2014 Use edit tool on COPY instead`);
-        }
-      }
-    }
-    if (tool6.includes("write_file") || tool6.includes("patch")) {
-      const a = args;
-      const writePath = a.path || null;
-      if (writePath && !guardian.canWrite(writePath)) {
-        const zone = guardian.classifyZone(writePath);
-        throw new Error(`[GUARDIAN] ZONE_VIOLATION: ${zone} zone \u2014 ${writePath}`);
-      }
-      if (writePath) {
-        guardian.registerCreate(writePath);
-      }
-    }
-    return;
   };
 }
 
