@@ -76,11 +76,11 @@ const FAKE_TEST_PATTERNS = [
 ];
 
 const SOURCE_INSPECTION_PATTERNS = [
-  /test\s+-f\s+\$\{?.*\}/i,
-  /test\s+-e\s+\$\{?.*\}/i,
+  /test\s+-[fed]\s+/i,
   /if\s+\[\s*-[fes]\s+.*\]\s*;/i,
-  /grep\s+-r\s+.*src\//i,
-  /ls\s+-l.*dist\//i,
+  /stat\s+/i,
+  /find\s+.*src/i,
+  /ls\s+-l.*(dist|src|build)\//i,
 ];
 
 const WRONG_CONTAINER_PATTERNS = [
